@@ -1,0 +1,44 @@
+{
+  "name": "sport-predict-blockchain",
+  "version": "1.0.0",
+  "description": "Solana blockchain contracts for SportPredict platform",
+  "main": "index.js",
+  "scripts": {
+    "build": "anchor build",
+    "deploy": "anchor deploy",
+    "deploy:devnet": "anchor deploy --provider.cluster devnet",
+    "deploy:mainnet": "anchor deploy --provider.cluster mainnet",
+    "test": "anchor test",
+    "test:devnet": "anchor test --provider.cluster devnet",
+    "idl": "anchor idl parse --file target/idl/sport_predict.json src/lib.rs",
+    "upgrade": "anchor upgrade",
+    "verify": "anchor verify",
+    "clean": "anchor clean",
+    "lint": "cargo clippy",
+    "fmt": "cargo fmt"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.29.0",
+    "@solana/web3.js": "^1.87.6",
+    "@solana/spl-token": "^0.3.9"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.1.0",
+    "@types/chai": "^4.3.0",
+    "@types/mocha": "^9.0.0",
+    "chai": "^4.3.0",
+    "mocha": "^9.0.0",
+    "ts-mocha": "^10.0.0",
+    "typescript": "^5.3.2"
+  },
+  "keywords": [
+    "solana",
+    "blockchain",
+    "sports",
+    "betting",
+    "prediction",
+    "anchor"
+  ],
+  "author": "SportPredict Team",
+  "license": "MIT"
+} 

@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  legalitycheck-kyc:
+    build: .
+    ports:
+      - "9000:9000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/legalitycheck
+      - PORT=9000
+      - NODE_ENV=development
+    depends_on:
+      - db
+    volumes:
+      - ./src:/app/src
+      - ./prisma:/app/prisma
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=legalitycheck
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data: 

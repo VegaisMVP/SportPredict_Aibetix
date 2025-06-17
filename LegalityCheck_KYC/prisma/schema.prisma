@@ -1,0 +1,412 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  username      String   @unique
+  email         String   @unique
+  password      String
+  walletAddress String?  @unique
+  userType      UserType @default(REGULAR)
+  isPremium     Boolean  @default(false)
+  premiumExpireAt DateTime?
+  isDesigner    Boolean  @default(false)
+  hasStaked     Boolean  @default(false)
+  balance       Float    @default(0)
+  isActive      Boolean  @default(true)
+  
+  // Compliance related fields
+  identityVerified Boolean @default(false)
+  identityVerifiedAt DateTime?
+  lastGeoCheck DateTime?
+  lastGeoCheckResult String? // JSON string of geo check result
+  complianceStatus ComplianceStatus @default(PENDING)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  bets          Bet[]
+  strategies    Strategy[] @relation("StrategyCreator")
+  strategyFollowers StrategyFollower[]
+  strategyExecutions StrategyExecution[]
+  etfs         ETF[] @relation("ETFManager")
+  etfInvestments ETFInvestment[]
+  predictions  Prediction[]
+  chatMessages ChatMessage[]
+  transactions Transaction[]
+  
+  // Compliance related relations
+  identityVerifications IdentityVerification[]
+  locationVerifications LocationVerification[]
+  reviewedVerifications IdentityVerification[] @relation("VerificationReviewer")
+
+  @@map("users")
+}
+
+model Match {
+  id          String   @id @default(cuid())
+  homeTeam    String
+  awayTeam    String
+  league      String
+  sport       String
+  startTime   DateTime
+  endTime     DateTime?
+  status      MatchStatus @default(UPCOMING)
+  homeScore   Int?
+  awayScore   Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  odds        Odds[]
+  bets        Bet[]
+  predictions Prediction[]
+  strategyExecutions StrategyExecution[]
+
+  @@map("matches")
+}
+
+model Odds {
+  id        String   @id @default(cuid())
+  matchId   String
+  type      OddsType
+  value     Float
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  bets      Bet[]
+
+  @@map("odds")
+}
+
+model Bet {
+  id               String   @id @default(cuid())
+  userId           String
+  matchId          String
+  oddsId           String
+  amount           Float
+  prediction       String
+  status           BetStatus @default(PENDING)
+  potentialWinnings Float
+  winnings         Float?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match            Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  odds             Odds     @relation(fields: [oddsId], references: [id], onDelete: Cascade)
+
+  @@map("bets")
+}
+
+model Strategy {
+  id                  String   @id @default(cuid())
+  name                String
+  description         String
+  rules               Json
+  riskLevel           Int
+  minBetAmount        Float
+  maxBetAmount        Float
+  targetSuccessRate   Float
+  isPublic            Boolean  @default(false)
+  creatorId           String
+  status              StrategyStatus @default(ACTIVE)
+  successRate         Float    @default(0)
+  totalExecutions     Int      @default(0)
+  successfulExecutions Int     @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  creator             User     @relation("StrategyCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  followers           StrategyFollower[]
+  executions          StrategyExecution[]
+
+  @@map("strategies")
+}
+
+model StrategyFollower {
+  userId     String
+  strategyId String
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  strategy   Strategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+
+  @@id([userId, strategyId])
+  @@map("strategy_followers")
+}
+
+model StrategyExecution {
+  id         String   @id @default(cuid())
+  strategyId String
+  userId     String
+  matchId    String
+  betAmount  Float
+  status     ExecutionStatus @default(PENDING)
+  winnings   Float?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  strategy   Strategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  match      Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@map("strategy_executions")
+}
+
+model ETF {
+  id              String   @id @default(cuid())
+  name            String
+  description     String
+  strategy        Json
+  riskLevel       Int
+  minInvestment   Float
+  maxInvestment   Float
+  annualReturn    Float
+  managementFee   Float
+  performanceFee  Float
+  managerId       String
+  status          ETFStatus @default(ACTIVE)
+  totalValue      Float    @default(0)
+  totalInvestors  Int      @default(0)
+  currentReturn   Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  manager         User     @relation("ETFManager", fields: [managerId], references: [id], onDelete: Cascade)
+  investments     ETFInvestment[]
+
+  @@map("etfs")
+}
+
+model ETFInvestment {
+  id         String   @id @default(cuid())
+  userId     String
+  etfId      String
+  amount     Float
+  shares     Float
+  status     InvestmentStatus @default(ACTIVE)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  etf        ETF      @relation(fields: [etfId], references: [id], onDelete: Cascade)
+
+  @@map("etf_investments")
+}
+
+model Prediction {
+  id          String   @id @default(cuid())
+  matchId     String
+  userId      String
+  prediction  String
+  confidence  Float
+  reasoning   String
+  model       String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("predictions")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  content   String
+  role      MessageRole
+  context   String   @default("general")
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+model Transaction {
+  id                String   @id @default(cuid())
+  userId            String
+  type              TransactionType
+  amount            Float
+  status            TransactionStatus @default(PENDING)
+  transactionHash   String?
+  destinationAddress String?
+  metadata          Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
+// Enums
+enum UserType {
+  REGULAR
+  PREMIUM
+  STRATEGIST
+  MANAGER
+  ADMIN
+}
+
+enum MatchStatus {
+  UPCOMING
+  LIVE
+  FINISHED
+  CANCELLED
+}
+
+enum OddsType {
+  HOME_WIN
+  AWAY_WIN
+  DRAW
+  OVER_UNDER
+  BOTH_TEAMS_SCORE
+  CORRECT_SCORE
+}
+
+enum BetStatus {
+  PENDING
+  WON
+  LOST
+  CANCELLED
+}
+
+enum StrategyStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum ExecutionStatus {
+  PENDING
+  EXECUTED
+  WON
+  LOST
+  CANCELLED
+}
+
+enum ETFStatus {
+  ACTIVE
+  PAUSED
+  CLOSED
+}
+
+enum InvestmentStatus {
+  ACTIVE
+  REDEEMED
+  CANCELLED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  BET
+  WINNING
+  REFUND
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// Compliance related enums
+enum ComplianceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DocumentType {
+  PASSPORT
+  NATIONAL_ID
+  DRIVERS_LICENSE
+  UTILITY_BILL
+}
+
+// Identity verification model
+model IdentityVerification {
+  id              String   @id @default(cuid())
+  userId          String
+  documentType    DocumentType
+  documentNumber  String
+  documentCountry String
+  documentImage   String   // Base64 encoded image
+  selfieImage     String   // Base64 encoded image
+  gpsLatitude     Float?
+  gpsLongitude    Float?
+  ipAddress       String
+  userAgent       String
+  status          VerificationStatus @default(PENDING)
+  rejectionReason String?
+  submittedAt     DateTime @default(now())
+  verifiedAt      DateTime?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewer        User?    @relation("VerificationReviewer", fields: [reviewedBy], references: [id])
+
+  @@map("identity_verifications")
+}
+
+// Geolocation verification model
+model LocationVerification {
+  id          String   @id @default(cuid())
+  userId      String
+  ipAddress   String
+  gpsLatitude Float?
+  gpsLongitude Float?
+  isAllowed   Boolean
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("location_verifications")
+} 
