@@ -1,3 +1,47 @@
+## Table of Contents
+1. [Declaration · VEGAIS Lab Open-Source Notice]
+2. [SportPredict Platform Intro]
+
+---
+
+# VEGAIS Lab Open Source License (V-OSL v1.0)
+
+1. **Open Access**
+
+   * All engineering files, source code, and product designs in this repository — except those listed under “Exclusions” — are released under the *Apache 2.0 License* **with the following additional terms**.
+   * Developers are free to clone, fork, modify, and distribute derivative works. VEGAIS may be treated as a Casino/Sportsbook-themed SaaS provider.
+
+2. **Exclusive Dependency Clause**
+
+   * Any Sportsbook product developed based on this code **must integrate** the match prediction data and betting strategies provided by VEGAIS Lab.
+   * If the use of these AI predictions and strategies leads to **any direct or indirect revenue**, developers are required to allocate **no less than 10%** of the proceeds to **VEGAIS Lab and the original strategy creators**.
+
+3. **Disclaimer on Profit and Risk**
+
+   * VEGAIS Lab makes **no guarantees** regarding the accuracy, profitability, or performance of any prediction or betting strategy, and is **not liable for any related losses**.
+   * By using or partially referencing this codebase, you are deemed to have accepted these terms. If violated, VEGAIS Lab reserves the right to pursue revenue claims and initiate legal action.
+
+4. **Exclusions (Not Open-Sourced)**
+
+   * The core algorithms behind our AI prediction models
+   * The raw datasets and weightings used for training the models
+   * Any secret keys or credentials used across VEGAIS products
+   * All proprietary agreements between VEGAIS Lab and third-party partners
+   * All user data and personal information
+
+---
+
+### Getting Started
+
+* To request an API key → Open an \[Issue] or email **[support@vegais.cash](mailto:support@vegais.cash)**
+* For commercial licensing or exclusive partnerships → Contact BD at **[bd@vegais.cash](mailto:bd@vegais.cash)**
+
+---
+
+© 2025 VEGAIS Lab. All rights reserved.
+---
+
+
 # SportPredict Platform
 
 > **Security Notice:**
